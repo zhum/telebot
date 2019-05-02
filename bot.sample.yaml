@@ -1,0 +1,31 @@
+---
+users:
+  62764753:
+    :name: Sergey Zhumatiy
+    :groups:
+    - lom2_switch
+    - test
+    :state: main
+    :auth: 1
+    :id: 62764753
+    :telegram-id: 62764753
+  987654321:
+    :name: Tester Supertest
+    :groups: []
+    :state: main
+    :auth: 1
+    :id: 987654321
+    :telegram-id: 987654321
+  280810801:
+    :name: Данила Жуматий
+    :id: 280810801
+    :groups: []
+    :state: main
+    :auth: 1
+    :telegram-id: 280810801
+groups:
+  lom1_lic: Сервера лицензий Ломоносов1
+  lom1_misc: Разное
+  test: Тестовая
+  lom1_alarm: Ломоносов1 - тревога
+  lom2_switch: Ломоносов2 - коммутаторы

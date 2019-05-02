@@ -1,0 +1,128 @@
+---
+:conf:
+  token: '655499892:AAH28sihyt6RxlnmT6w-ooF4aL_oRD_mT-0'
+
+  token2: '291277135:AAGKAQmBdpJcCZplJM6bgwu5K5rsypFoNyA'
+  token-lom3bot: '655499892:AAH28sihyt6RxlnmT6w-ooF4aL_oRD_mT-0'
+  token-lom4bot: '624071800:AAFQFqM6HrY9al0ROinrx4bMPHScWLSP9XI'
+
+  proxy: http://zhum-eu.freeddns.org:9000
+  proxy_user: rkn
+  proxy_pass: rkn-tyan
+  proxy_http: no
+  service_port: 8003
+
+  text_socket: /tmp/tele_text_sock
+  users: ./bot_home.yaml
+
+:states:
+  main:
+    unauthorized: unauth1
+    :events:
+      e1:
+        msg: Привет!
+        state: e2
+      e3:
+        exec: echo yes
+        ok_state: e2
+        fail_state: main
+      e4:
+        state: e4
+      e5:
+        state: e5
+      sub:
+        state: sub
+      unsub:
+        state: unsub
+      sub_list:
+        state: sub_list
+      c1:
+        cluster: lom1
+        state: cluster
+      c2:
+        cluster: lom2
+        state: cluster
+      menu_check:
+        state: menu_check
+    :menu:
+      e1: "Привет !"
+      e3: Йес
+      e4: image
+      e5: "Е!!!"
+      sub: подписаться
+      unsub: отписаться
+      sub_list: мои подписки
+      c1: Ломоносов
+      c2: Ломоносов 2
+      menu_check: Менюшка
+    msg: Выбери вариант!
+
+
+  unauth1:
+    msg: "О чём поболтаем?"
+    :events:
+      auth:
+        state: do_auth
+      _other:
+        state: unauth2
+
+  unauth2:
+    auth_check: "Ок, как зовут нашего кота?"
+    auth_answer: "Юки"
+    ok_state: main
+    auth_msg: 'ДА!!!!!!!!'
+    fail_state: unauth1
+    auth_fail: 'Упс, неа...'
+
+  e2:
+    msg: Ещё привет!
+    state: main
+
+  cluster:
+    exec: echo "%cluster% is alive"
+
+  e4:
+    exec: echo /home/serg/Изображения/Утюг.jpg
+    is_jpeg: 1
+    img: img1
+
+  e5:
+    exec: echo yes
+    ok_state: e55
+    fail_state: e56
+
+  e55:
+    msg: "YES!"
+    state: main
+  e56:
+    msg: "O, NOOOO!"
+    state: main
+
+  sub:
+    subscriptions: new
+    prompt: "Выбирайте на что подписаться!"
+    cancel: "Передумал"
+    cancel_state: main
+    ok_state: main
+    
+  unsub:
+    subscriptions: del
+    prompt: "От чего отпишемся?"
+    cancel: "Передумал"
+    cancel_state: main
+    ok_state: main
+
+  sub_list:
+    subscriptions: my
+    next_state: e55
+
+  menu_check:
+    exec: "echo 'return=main;привет2=e2;картинка=e4'"
+    is_menu: 1
+
+:groups:
+  lom1_lic: Сервера лицензий Ломоносов1
+  lom1_misc: Разное
+  test: Тестовая
+  lom1_alarm: Ломоносов1 - тревога
+  lom2_switch: Ломоносов2 - коммутаторы

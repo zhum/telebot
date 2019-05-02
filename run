@@ -1,0 +1,6 @@
+#!/bin/bash
+#cd /home/serg/services/home_bot
+export RBENV_ROOT="${HOME}/.rbenv"
+eval "$(rbenv init -)"
+bundle exec ruby ./telebot2.rb teleconfig.yaml
+
