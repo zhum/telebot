@@ -1,194 +1,223 @@
-Формат конфигурационного yaml файла:
-===============================
+This is bot framework, now it supports telegram, facebook messenger
+and test console interface. New messengers can be added by 'adapters'. New functions can be added by 'processors'.
 
-:conf:       
-------
+How it works: every time, user is connected, bot assigns a 'state' to him. First state is always 'main'. Every state can do something on
+enter and something on event. Event = user input. In base implementation state can show menu, each menu item is associated with
+event.
 
-token: '655499892:AAH28sihyt6RxlnmT6w-ooF4aL_oRD_mT-0'
-токен бота
+User can be authenticated or not, this allows to pass him by different ways. State can do action and immediately pass control to next state (be careful for infinite loops!).
 
-Опционально:
-------------
-  proxy: http://....
-  proxy_user: ....
-  proxy_pass: ....
-  proxy_http: yes/no
-  Если 'no' - socks5-прокси
+How do processors work. Processor class should implement `can_enter`
+and `can_process_event` class methods. They check state description
+and event, and decide, can this processor do some action on state
+enter and event accordingly. Processor should be inherited from GenericProcessor class.
 
-  service_port: 8002
+By default configuration is stored in `teleconfig.yaml` file, but you can pass another name as first argument to bot.
 
-:states: (таблица состояний)
---------
 
-**Внимание**: ключи :unauthorized, :state, :menu и :events начинаются с ':', все остальные (пока) - нет.
+# configuration YAML-file description:
 
-    имя_состояния:
-      msg: Выбери вариант!     # сообщение при переходе в состояние
+## :conf section
 
-      :unauthorized: state     # немедленно перейти в состояние state, если пользователь
-                               # не авторизован (всё остальное, кроме переменных, игнорируется)
-      :state:  state           # после выполнения остальных действий перейти в состояние state
-                               # не стоит совмещать с :menu:, там работать не будет
+### Proxy
 
-      :menu:                   # вывести меню при переходе в состояние
-        e1: "Привет !"         # имя события / пункт меню
+- `proxy: http://....`  proxy address
+- `proxy_user: ....`  proxy user
+- `proxy_pass: ....`  proxy password
+- `proxy_http: yes/no`  'yes' = http proxy, 'no' = socks5 proxy
+
+### Service
+
+- `service_port: 8003`  port for notifications
+- `service_token: 'secret'` secret token for notifications
+
+
+- `telegram_token: 'XXXXXX:yyyyyyy'`  telegram bot token
+
+- `text_socket: /tmp/tele_text_sock`   socket for console bot
+
+- `fb_token: qweqweq`     facebook token
+- `fb_verify_token: 123456`  facebook verify token
+- `fb_app_secret: qweasdzxc`  facebook app secret
+- `fb_port: 5550`  listen port for facebook bot
+- `server_base: 'https://qqq.ngrok.io'`  base url for images uploads
+
+
+- `users: ./bot_users.yaml`   path to users yaml database
+
+### :states (states table)
+
+**IMPORTANT**: `:unauthorized`, `:state`, `:menu` and `:events` keys started with ':', others (usually) not.
+
+    state_name:
+      msg: Hello!              # message on state enter
+
+      :unauthorized: state     # immediately go to state, if user
+                               # is not authorized
+      :state:  state           # go to state after all. Can be 
+                               # cancelled by :menu:
+
+      :menu:                   # show menu on state enter
+        e1: "Hi !"             # format: event_name: menu text
         ...
 
-      :events:                 # список событий
-        имя_события:           # можно использовать _other = любой другой вариант 
-                               # (имя события записывается в переменной last_event)
+      :events:                 # events list
+        state_name:            # event name or "_other"
+                               # (event name is stored in "last_event" variable)
                                #
-          msg: Привет!         # сообщение при получении события
-          state: e2            # имя нового состояния
+          state: e2            # go to state e2
+
+          something: value     # set variable 'something' to 'value'
   
-          exec: cmd arg        # выполнить команду (программу)
-          ok_state: e2         # если код возврата 0 - перейти в новое состояние
-          fail_state: e3       # если код возврата не 0 - перейти в новое состояние
+          exec: cmd arg        # execute command
+          ok_state: e2         # go to e2 if command exit code = 0
+          fail_state: e3       # go to e3 if command exit code != 0
 
 
-Особые параметры в состояниях
------------------
+### Special options in states (not menu)
 
-### Аутентификация
+#### Authentication
 
-auth_check: "приглашение"      # Требуется ввести ответ на секретный вопрос. Предварительно выводится приглашение
-auth_answer: "..."             # Ответ на секретный вопрос
-auth_cmd: "..."                # Команда проверки. Ей передаётся ответ и имя пользователя.
-                               # Если она выдаёт на стандартный вывод 'ok', проверка пройдена
-auth_fail: "..."               # Сообщение при провале проверки
-fail_state: state              # Состояние при провале проверки
-auth_msg: "..."                # Сообщение при успешной проверке
-ok_state: state                # Состояние при успешной проверке
-timeout: N                     # Таймаут выполнения программы порверки
+    auth_check: prompt      # Secret question
+    auth_answer: "..."      # Answer on secret question
+    auth_cmd: "..."         # Answer check command (get answer and 
+                            # username). Check is passed if command
+                            # prints 'ok'
+    auth_fail: "..."        # Message on authentication fail
+    fail_state: state       # New state on authentication fail
+    auth_msg: "..."         # Message on authentication ok
+    ok_state: state         # New state on authentication ok
+    timeout: N              # Command execution timeout
 
-**TODO**: сделать auth_check_cmd и выводить приглашение из вызова команды.
-**TODO**: передавать командам переменные окружения с данными о пользователе.
+**TODO**: implement auth_check_cmd, which generates secret question
+**TODO**: pass variables to all commands
 
-### Подписки
+#### Groups subscriptions
 
-subscriptions: type            # действия с подписками. Возможные варианты:
-                               # all  = перечислить список всех доступных
-                               # my   = перечислить те, на которые подписан пользователь
-                               # new  = подписать на новую
-                               # del  = отписать от какой-то
-next_state: st                 # после 'all' или 'my' перейти в указанное состояние
-cancel: "..."                  # текст пункта отказа подписки/отписки (по умолчанию "Отказ")
-ok_state: st                   # перейти в указанное состояние после подписки/отписки
-ok_msg: "..."                  # выдать сообщение после подписки/отписки
-cancel_state: st               # перейти в указанное состояние при отказе от подписки/отписки
-cancel_msg: "..."              # выдать сообщение при отказе от подписки/отписки
-
-
-### Выполнение программы
-
-exec: cmd                      # выполнить программу
-ok_state: st                   # перейти в состояние если команда вернула код 0
-fail_state: st                 # перейти в состояние если команда вернула код не 0
-next_state: st                 # перейти в состояние при любом коде возврата
-is_jpeg: anything              # результат - путь к картинке в формате jpg
-is_png: anything               # результат - путь к картинке в формате png
-is_gif: anything               # результат - путь к картинке в формате gif
-is_menu: anything              # результат - описание меню (пункты через ';', формат элемента - 'строка=состояние')
-lines:  @N,@M                  # @ = '+'/'' или '-', N,M - целые. Значение - вырезать часть строк вывода программы.
-                               # Берётся M строк с N-той, если M<0, то до M-той с конца.
-                               # Счёт идет с 0 !!!
-timeout: N                     # Таймаут выполнения программы
+subscriptions: type  # Subscriptions actions:
+                     # all  = list all available
+                     # my   = list subscribed on
+                     # new  = subscribe to new
+                     # del  = unsubscribe one
+next_state: st       # after 'all' or 'my' go to state st
+cancel: "..."        # (un)subscribe cancellation text
+ok_state: st         # go to state st after (un)subscribe
+ok_msg: "..."        # show message after (un)subscribe
+cancel_state: st     # go to state st if (un)subscribe cancelled
+cancel_msg: "..."    # show message if (un)subscribe cancelled
 
 
-Обработчики
-===========
+#### Commands execution
+
+exec: cmd           # execute cmd
+ok_state: st        # go to state if command exit code = 0
+fail_state: st      # go to state if command exit code != 0
+next_state: st      # go to state anyway
+is_jpeg: anything   # command prints path to image in jpeg format
+is_png: anything    # command prints path to image in png format
+is_gif: anything    # command prints path to image in gif format
+is_menu: anything   # command prints menu (menu options are printed
+                    # via ';', option format - 'str=state')
+lines:  @N,@M       # @ = '+'/'' or '-', N,M - integers. Cut program
+                    # output lines. Use only M lines from N. If M<0
+                    # then N lines from M-th from last.
+                    # Count starts with 0 !!!
+timeout: N          # Command execution timeout
+
+
+# Processors
+
 
 ````
 class BlaBlaBlaProcessor < GenericProcessor
   class << self
 
-    # Вызывается при переходе в новое состояние событием event
-    # Если возвращается true, то затем немедленно вызывается on_enter 
+    # Called on state enter by event, checks if this processor is
+    # appliable. If returns true, then `on_enter` is called.
+    #
     def can_enter processor, event
       false
     end
 
-    # Вызывается получении события event
-    # Если возвращается true, то затем немедленно вызывается on_event
+    # Called on event
+    # If returns true, then `on_event` is called
     def can_process_event processor, event
       false
     end
 
-    # Вызывается при переходе из состояния old в новое состояние событием event
+    # Called on transition from `old` state by event
     def on_enter processor, old, event
-      processor.sender.send_message processor.get_var('hello', 'Привет, '+processor.username)
+      processor.sender.send_message processor.get_var('hello', 'Hi, '+processor.username)
     end
 
-    # Вызывается при получениии события event
+    # Called on event
     def on_event processor, event
-      processor.sender.send_message "Привет, я "+processor.get_var('my_name', 'Бот Вася')
+      processor.sender.send_message "Hi, I am "+processor.get_var('my_name', 'bot Vasya')
       processor.change_state processor.get_var('new_state','main')
     end
   end #self
 end
 
+# register this processor
 StateProcessor.register_processor BlaBlaBlaProcessor
 ````
 
 
-Класс Processor
-===============
+## Processor class
 
-log x
------
-Вывод строки в лог
+### log str
 
-change_state new_state
-----------------------
-Перейти в новое состояние
+Log string str
 
-set_var name, value
--------------------
-Установить переменную
+### change_state new_state
 
-get_var name, default=nil
--------------------------
-Получить переменную
+Go to new state
 
-set_auth [1/0]
----------------
-Урстановить/сбросить авторизацию пользователя
+### set_var name, value
 
-state
-------
-Получить текущее состояние
+Set variable
 
-opts
-----
-Получить параметры, перенданные в конструктор
+### get_var name, default=nil
 
-sender
-------
-Объект класса Sender
+Get variable
 
-conf
-----
-Настройки
+### set_auth [1/0]
 
-Автоматические переменные
--------------------------
-username = имя пользоателя
-authorized = 1, если авторизован, 0, если нет
-groups = все группы
-user_groups = группы пользователя
+Set/unset user authenticated state
+
+### state
+
+Get current state
+
+### opts
+
+Get options, passed to constructor
+
+### sender
+
+Sender class object
+
+### conf
 
 
-Класс Sender
-============
+### Authomatic variables
 
-initialize bot, user
---------------------
-Конструктор
+username = user name
+authorized = 1 if authorized, 0 if not
+groups = all groups
+user_groups = all groups, user is subscribed to
 
-send_message msg, opts=nil, chat=nil
-------------------------------------
-Послать сообщение msg
 
-send_photo chat, photo
-----------------------
-Послать картинку
+## Sender class
+
+### initialize bot, user
+
+constructor
+
+### send_message msg, opts=nil, chat=nil
+
+send message
+
+### send_photo chat, photo
+
+send photo

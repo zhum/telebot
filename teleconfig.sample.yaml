@@ -1,29 +1,32 @@
 ---
 :conf:
-  token: '655499892:AAH28sihyt6RxlnmT6w-ooF4aL_oRD_mT-0'
+  telegram_token: '123456678:qwertyuiop'
 
-  token2: '291277135:AAGKAQmBdpJcCZplJM6bgwu5K5rsypFoNyA'
-  token-lom3bot: '655499892:AAH28sihyt6RxlnmT6w-ooF4aL_oRD_mT-0'
-  token-lom4bot: '624071800:AAFQFqM6HrY9al0ROinrx4bMPHScWLSP9XI'
-
-  proxy: http://zhum-eu.freeddns.org:9000
-  proxy_user: rkn
-  proxy_pass: rkn-tyan
+  proxy: http://my.proxy.address:1234
+  proxy_user: username
+  proxy_pass: password
   proxy_http: no
+
   service_port: 8003
+  service_token: 'secret'
+  server_base: 'https://qqqqqqqq.ngrok.io'
+
+  fb_token: qweqweqweqweqweqweqweqweqweqweqwe
+  fb_verify_token: 123456
+  fb_app_secret: qweasdzxc
+  fb_port: 5550
 
   text_socket: /tmp/tele_text_sock
-  users: ./bot_home.yaml
+  users: ./bot_users.yaml
 
 :states:
   main:
     unauthorized: unauth1
     :events:
       e1:
-        msg: Привет!
         state: e2
       e3:
-        exec: echo yes
+        exec: true
         ok_state: e2
         fail_state: main
       e4:
@@ -37,29 +40,29 @@
       sub_list:
         state: sub_list
       c1:
-        cluster: lom1
-        state: cluster
+        mystr: OK
+        state: check1
       c2:
-        cluster: lom2
-        state: cluster
+        mystr: NOT OK
+        state: check1
       menu_check:
         state: menu_check
     :menu:
-      e1: "Привет !"
-      e3: Йес
+      e1: "Hello!"
+      e3: Hello2
       e4: image
-      e5: "Е!!!"
-      sub: подписаться
-      unsub: отписаться
-      sub_list: мои подписки
-      c1: Ломоносов
-      c2: Ломоносов 2
-      menu_check: Менюшка
-    msg: Выбери вариант!
+      e5: "YES"
+      sub: subscribe me
+      unsub: unsubscribe me
+      sub_list: my subscriptions
+      c1: check ok
+      c2: check not ok
+      menu_check: submenu
+    msg: Make your choice
 
 
   unauth1:
-    msg: "О чём поболтаем?"
+    msg: "Talk to me?"
     :events:
       auth:
         state: do_auth
@@ -67,22 +70,22 @@
         state: unauth2
 
   unauth2:
-    auth_check: "Ок, как зовут нашего кота?"
-    auth_answer: "Юки"
+    auth_check: "The best answer?"
+    auth_answer: "42"
     ok_state: main
-    auth_msg: 'ДА!!!!!!!!'
+    auth_msg: Yes! Now you've got priveleges
     fail_state: unauth1
-    auth_fail: 'Упс, неа...'
+    auth_fail: Ooops, no....
 
   e2:
-    msg: Ещё привет!
+    msg: Hellllllooooooo!
     state: main
 
   cluster:
-    exec: echo "%cluster% is alive"
+    exec: echo "check is %mystr%"
 
   e4:
-    exec: echo /home/serg/Изображения/Утюг.jpg
+    exec: echo /tmp/test.jpg
     is_jpeg: 1
     img: img1
 
@@ -100,15 +103,15 @@
 
   sub:
     subscriptions: new
-    prompt: "Выбирайте на что подписаться!"
-    cancel: "Передумал"
+    prompt: Choose!
+    cancel: Changed my mind
     cancel_state: main
     ok_state: main
     
   unsub:
     subscriptions: del
-    prompt: "От чего отпишемся?"
-    cancel: "Передумал"
+    prompt: What to drop?
+    cancel: Changed my mind
     cancel_state: main
     ok_state: main
 
@@ -117,12 +120,10 @@
     next_state: e55
 
   menu_check:
-    exec: "echo 'return=main;привет2=e2;картинка=e4'"
+    exec: "echo 'return=main;hi2=e2;image=e4'"
     is_menu: 1
 
 :groups:
-  lom1_lic: Сервера лицензий Ломоносов1
-  lom1_misc: Разное
-  test: Тестовая
-  lom1_alarm: Ломоносов1 - тревога
-  lom2_switch: Ломоносов2 - коммутаторы
+  important_notices: Notifications
+  misc: Miscelaneous
+  test: Just test

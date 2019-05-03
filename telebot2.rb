@@ -4,6 +4,7 @@ require "logger"
 require 'socksify'
 require 'socksify/http'
 
+require "./tele_config"
 USE_TELEGRAM = true
 USE_TEXT = true
 USE_FB = true
@@ -34,6 +35,8 @@ end
 # INIT
 # 
 ###############################################
+TeleConfig.init(ARGV[0] || "teleconfig.yaml")
+
 # logfile = File.new("app.log", 'a+')
 # logfile.sync = true
 logger=Logger.new(LOGFILE, LOG_COUNT, LOG_SIZE)
@@ -42,7 +45,6 @@ TeleLogger.set logger
 
 Dir["./lib/*.rb"].each {|file| require file }
 
-TeleConfig.init(ARGV[0] || "teleconfig.yaml")
 Users.init(TeleConfig[:conf]['users'])
 
 Dir["./lib/adapters/*.rb"].each {|file| require file }
@@ -71,7 +73,7 @@ threads = []
 if USE_TELEGRAM
   telegram_queue=Queue.new
   queues << telegram_queue
-  telegram_thread=Thread.new { TelegramLoop.go TeleConfig[:conf]['token'], telegram_queue}
+  telegram_thread=Thread.new { TelegramLoop.go TeleConfig[:conf]['telegram_token'], telegram_queue}
   threads << telegram_thread
 end
 if USE_TEXT

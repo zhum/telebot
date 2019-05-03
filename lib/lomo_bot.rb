@@ -2,7 +2,7 @@ require "sinatra/base"
 
 class LomoBot < Sinatra::Base
 
-  DEF_AUTH_TOKEN = TeleConfig[:conf]['service_token']
+  DEF_AUTH_TOKEN = ::TeleConfig[:conf]['service_token']
   @@auth_token = DEF_AUTH_TOKEN
 
   def users

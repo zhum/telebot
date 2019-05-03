@@ -23,15 +23,32 @@ class FacebookSender
     FBRunner.deliver(message_options) #, access_token: TeleConfig[:conf]['fb_token'])
   end
 
-  # def send_photo photo, chat=nil
-  #   if chat.nil?
-  #     chat=@user[:id]
-  #   end
-  #   message = {photo: photo, chat_id: chat}
-  #   @conn.write message.inspect
-  # end
+  def send_photo photo, type=nil, chat=nil
+    basename = photo.gsub(/.*\//,'')
+    FileUtils.cp(photo,"file/#{basename}")
+    chat = chat.nil? ? @user[:'facebook-id'] : chat
+    message_options = {
+      recipient: { id: chat },
+      message: {
+        attachment: {
+          type: "image", 
+          payload: {
+            url: "#{http_base}/file/#{basename}",
+            is_reusable: true
+          }
+        }
+      }
+    }
+    warn "image-> #{message_options.inspect}"
+    FBRunner.deliver(message_options) #, access_token: TeleConfig[:conf]['fb_token'])
+  end
 
   private
+
+  def http_base
+    TeleConfig[:conf]['server_base']
+  end
+
   def mk_keyboard array
     # should be [ [ [action,text],... ], ...] (array levels rows/line/action+text)
     array = [array] unless array[0][0].instance_of?(Array)
@@ -81,7 +98,7 @@ class FBConfigProvider < Facebook::Messenger::Configuration::Providers::Base
 end
 
 class FileServer < Sinatra::Base
-  set :public_folder, 'images'
+  set :public_folder, 'file'
   set :static, true
 end
 
@@ -175,6 +192,7 @@ class FacebookLoop < TeleLoop
     Rack::Server.start(
       app: dispatch,
       Port: (TeleConfig[:conf]['fb_port'] || 5550),
+      Host: '0.0.0.0'
       )
   end
 end
