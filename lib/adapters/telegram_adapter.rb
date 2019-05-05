@@ -47,7 +47,9 @@ module Telegram
   end
 end
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+#
+# End monkey patch
+#
 
 Telegram::Bot.configure do |config|
   cfg=TeleConfig.data[:conf]
@@ -83,7 +85,8 @@ class TelegramSender
     if opts[:menu]
       message.merge!(reply_markup: mk_keyboard(opts[:menu]))
     end
-    warn ">>> #{message.inspect}"
+    #warn ">>> #{message.inspect}"
+    #@bot.api.send_message chat_id: chat, text: msg, reply_markup: Telegram::Bot::Types::ReplyKeyboardRemove.new(remove_keyboard: true)
     @bot.api.send_message message
   end
 
